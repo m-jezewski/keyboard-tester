@@ -1,5 +1,6 @@
 ## Keyboard Tester
 vibe-coded browser-based keyboard testing tool with double key registration (chattering) detection.
+<img width="1324" height="890" alt="image" src="https://github.com/user-attachments/assets/620d765b-fb97-4c02-937f-8958ef4189db" />
 
 ### What it does
 
