@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Keyboard Tester</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #1a1a2e;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 30px 20px;
+            user-select: none;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 300;
+            margin-bottom: 8px;
+            color: #fff;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        .keyboard {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 20px;
+            background: #16213e;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            border: 1px solid #2a2a4a;
+        }
+
+        .row {
+            display: flex;
+            gap: 5px;
+            justify-content: flex-start;
+        }
+
+        .key {
+            min-width: 48px;
+            height: 48px;
+            background: #2a2a4a;
+            border: 1px solid #3a3a5a;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 500;
+            color: #ccc;
+            transition: background 0.08s, transform 0.08s, box-shadow 0.08s;
+            position: relative;
+            cursor: default;
+            flex-shrink: 0;
+        }
+
+        .key.pressed {
+            background: #0f3460;
+            border-color: #4a9eff;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(74, 158, 255, 0.3);
+            transform: scale(0.95);
+        }
+
+        .key.was-pressed {
+            background: #1a3a5c;
+            border-color: #3a7abf;
+            color: #b0d0f0;
+        }
+
+        /* Key sizes */
+        .key-backspace { min-width: 101px; }
+        .key-tab { min-width: 74px; }
+        .key-backslash { min-width: 74px; }
+        .key-caps { min-width: 88px; }
+        .key-enter { min-width: 113px; }
+        .key-lshift { min-width: 115px; }
+        .key-rshift { min-width: 142px; }
+        .key-ctrl { min-width: 64px; }
+        .key-alt { min-width: 56px; }
+        .key-meta { min-width: 56px; }
+        .key-space { min-width: 330px; flex-grow: 1; max-width: 330px; }
+        .key-fn { min-width: 42px; height: 38px; font-size: 10px; }
+        .key-arrow { min-width: 48px; height: 22px; font-size: 10px; }
+        .key-arrow-full { min-width: 48px; height: 48px; font-size: 10px; }
+        .key-nav { min-width: 48px; height: 38px; font-size: 9px; }
+        .key-numpad { min-width: 48px; }
+        .key-num0 { min-width: 101px; }
+        .key-numenter { min-width: 48px; height: 101px; }
+
+        .arrow-col {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        /* Sections */
+        .keyboard-main {
+            display: flex;
+            gap: 20px;
+        }
+
+        .section-main { display: flex; flex-direction: column; gap: 5px; }
+        .section-nav { display: flex; flex-direction: column; gap: 5px; }
+        .section-numpad { display: flex; flex-direction: column; gap: 5px; }
+
+        .fn-row {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .fn-group { display: flex; gap: 5px; }
+        .fn-spacer { width: 20px; }
+        .fn-half-spacer { width: 8px; }
+
+        .nav-row { display: flex; gap: 5px; }
+        .nav-spacer { height: 43px; }
+        .numpad-row { display: flex; gap: 5px; }
+
+        /* History */
+        .history-container {
+            margin-top: 30px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .history-title {
+            font-size: 18px;
+            font-weight: 400;
+            color: #aaa;
+        }
+
+        .history-clear {
+            background: #2a2a4a;
+            border: 1px solid #3a3a5a;
+            color: #888;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.15s;
+        }
+
+        .history-clear:hover {
+            background: #3a3a5a;
+            color: #ccc;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            max-height: 350px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .history-list::-webkit-scrollbar { width: 6px; }
+        .history-list::-webkit-scrollbar-track { background: transparent; }
+        .history-list::-webkit-scrollbar-thumb { background: #3a3a5a; border-radius: 3px; }
+
+        .history-entry {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 14px;
+            background: #16213e;
+            border-radius: 8px;
+            border: 1px solid #2a2a4a;
+            font-size: 13px;
+            font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+        }
+
+        .history-entry.fast {
+            background: #3e1a1a;
+            border-color: #8b3a3a;
+        }
+
+        .history-key-name {
+            font-weight: 600;
+            color: #4a9eff;
+            min-width: 140px;
+        }
+
+        .history-entry.fast .history-key-name {
+            color: #ff6b6b;
+        }
+
+        .history-code {
+            color: #666;
+            min-width: 160px;
+            font-size: 11px;
+        }
+
+        .history-delta {
+            color: #888;
+            min-width: 100px;
+            text-align: right;
+        }
+
+        .history-entry.fast .history-delta {
+            color: #ff4444;
+            font-weight: 700;
+        }
+
+        .history-event-type {
+            color: #555;
+            font-size: 11px;
+            min-width: 20px;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 24px;
+            margin-top: 20px;
+            padding: 12px 20px;
+            background: #16213e;
+            border-radius: 10px;
+            border: 1px solid #2a2a4a;
+            font-size: 13px;
+        }
+
+        .stat-item {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .stat-label { color: #666; }
+        .stat-value { color: #4a9eff; font-weight: 600; font-family: 'Cascadia Code', monospace; }
+
+        #typing-area {
+            width: 100%;
+            max-width: 900px;
+            margin-top: 20px;
+            padding: 14px 18px;
+            background: #16213e;
+            border: 1px solid #2a2a4a;
+            border-radius: 10px;
+            color: #e0e0e0;
+            font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        #typing-area:focus {
+            border-color: #4a9eff;
+            box-shadow: 0 0 12px rgba(74, 158, 255, 0.15);
+        }
+
+        #typing-area::placeholder {
+            color: #555;
+            font-style: italic;
+        }
+
+        .no-history {
+            text-align: center;
+            padding: 40px;
+            color: #555;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>KEYBOARD TESTER</h1>
+    <p class="subtitle">Press any key to test it</p>
+
+    <div class="keyboard">
+        <!-- Function row -->
+        <div class="fn-row" id="fn-row"></div>
+
+        <!-- Main keyboard + nav + numpad -->
+        <div class="keyboard-main">
+            <div class="section-main" id="main-section"></div>
+            <div class="section-nav" id="nav-section"></div>
+            <div class="section-numpad" id="numpad-section"></div>
+        </div>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat-item">
+            <span class="stat-label">Total presses:</span>
+            <span class="stat-value" id="stat-total">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Unique:</span>
+            <span class="stat-value" id="stat-unique">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Fastest:</span>
+            <span class="stat-value" id="stat-fastest">—</span>
+        </div>
+    </div>
+
+    <textarea id="typing-area" placeholder="Start typing..." rows="4"></textarea>
+
+    <div class="history-container">
+        <div class="history-header">
+            <span class="history-title">Key press history</span>
+            <button class="history-clear" id="clear-btn">Clear</button>
+        </div>
+        <div class="history-list" id="history-list">
+            <div class="no-history">Press a key to see the history...</div>
+        </div>
+    </div>
+
+    <script>
+        // Keyboard layout definition: [code, label, cssClass?]
+        const fnRow = [
+            ['Escape','Esc','key-fn'],
+            null, // spacer
+            ['F1','F1','key-fn'],['F2','F2','key-fn'],['F3','F3','key-fn'],['F4','F4','key-fn'],
+            'half', // half spacer
+            ['F5','F5','key-fn'],['F6','F6','key-fn'],['F7','F7','key-fn'],['F8','F8','key-fn'],
+            'half',
+            ['F9','F9','key-fn'],['F10','F10','key-fn'],['F11','F11','key-fn'],['F12','F12','key-fn'],
+        ];
+
+        const mainRows = [
+            [['Backquote','`'],['Digit1','1'],['Digit2','2'],['Digit3','3'],['Digit4','4'],['Digit5','5'],['Digit6','6'],['Digit7','7'],['Digit8','8'],['Digit9','9'],['Digit0','0'],['Minus','-'],['Equal','='],['Backspace','Backspace','key-backspace']],
+            [['Tab','Tab','key-tab'],['KeyQ','Q'],['KeyW','W'],['KeyE','E'],['KeyR','R'],['KeyT','T'],['KeyY','Y'],['KeyU','U'],['KeyI','I'],['KeyO','O'],['KeyP','P'],['BracketLeft','['],['BracketRight',']'],['Backslash','\\','key-backslash']],
+            [['CapsLock','Caps','key-caps'],['KeyA','A'],['KeyS','S'],['KeyD','D'],['KeyF','F'],['KeyG','G'],['KeyH','H'],['KeyJ','J'],['KeyK','K'],['KeyL','L'],['Semicolon',';'],['Quote','\''],['Enter','Enter','key-enter']],
+            [['ShiftLeft','Shift','key-lshift'],['KeyZ','Z'],['KeyX','X'],['KeyC','C'],['KeyV','V'],['KeyB','B'],['KeyN','N'],['KeyM','M'],['Comma',','],['Period','.'],['Slash','/'],['ShiftRight','Shift','key-rshift']],
+            [['ControlLeft','Ctrl','key-ctrl'],['MetaLeft','Win','key-meta'],['AltLeft','Alt','key-alt'],['Space','','key-space'],['AltRight','Alt','key-alt'],['MetaRight','Win','key-meta'],['ContextMenu','Menu','key-ctrl'],['ControlRight','Ctrl','key-ctrl']],
+        ];
+
+        const navRows = [
+            [['PrintScreen','PrtSc','key-nav'],['ScrollLock','ScrLk','key-nav'],['Pause','Pause','key-nav']],
+            'spacer',
+            [['Insert','Ins','key-nav'],['Home','Home','key-nav'],['PageUp','PgUp','key-nav']],
+            [['Delete','Del','key-nav'],['End','End','key-nav'],['PageDown','PgDn','key-nav']],
+            'spacer',
+            'arrows',
+        ];
+
+        const numpadRows = [
+            [['NumLock','Num','key-numpad'],['NumpadDivide','/','key-numpad'],['NumpadMultiply','*','key-numpad'],['NumpadSubtract','-','key-numpad']],
+            [['Numpad7','7','key-numpad'],['Numpad8','8','key-numpad'],['Numpad9','9','key-numpad'],['NumpadAdd','+','key-numenter']],
+            [['Numpad4','4','key-numpad'],['Numpad5','5','key-numpad'],['Numpad6','6','key-numpad']],
+            [['Numpad1','1','key-numpad'],['Numpad2','2','key-numpad'],['Numpad3','3','key-numpad'],['NumpadEnter','Ent','key-numenter']],
+            [['Numpad0','0','key-num0'],['NumpadDecimal','.','key-numpad']],
+        ];
+
+        // Build keyboard DOM
+        const keyElements = {};
+
+        function createKey(code, label, extraClass) {
+            const el = document.createElement('div');
+            el.className = 'key' + (extraClass ? ' ' + extraClass : '');
+            el.textContent = label;
+            el.dataset.code = code;
+            keyElements[code] = el;
+            return el;
+        }
+
+        // Function row
+        const fnRowEl = document.getElementById('fn-row');
+        fnRow.forEach(item => {
+            if (item === null) {
+                const sp = document.createElement('div');
+                sp.className = 'fn-spacer';
+                fnRowEl.appendChild(sp);
+            } else if (item === 'half') {
+                const sp = document.createElement('div');
+                sp.className = 'fn-half-spacer';
+                fnRowEl.appendChild(sp);
+            } else {
+                fnRowEl.appendChild(createKey(item[0], item[1], item[2]));
+            }
+        });
+
+        // Main section
+        const mainSection = document.getElementById('main-section');
+        mainRows.forEach(row => {
+            const rowEl = document.createElement('div');
+            rowEl.className = 'row';
+            row.forEach(k => rowEl.appendChild(createKey(k[0], k[1], k[2])));
+            mainSection.appendChild(rowEl);
+        });
+
+        // Nav section
+        const navSection = document.getElementById('nav-section');
+        navRows.forEach(item => {
+            if (item === 'spacer') {
+                const sp = document.createElement('div');
+                sp.className = 'nav-spacer';
+                navSection.appendChild(sp);
+            } else if (item === 'arrows') {
+                // Arrow keys: up row, then down/left/right row
+                const upRow = document.createElement('div');
+                upRow.className = 'nav-row';
+                upRow.style.justifyContent = 'center';
+                upRow.appendChild(createKey('ArrowUp', '▲', 'key-nav'));
+                navSection.appendChild(upRow);
+
+                const bottomRow = document.createElement('div');
+                bottomRow.className = 'nav-row';
+                bottomRow.appendChild(createKey('ArrowLeft', '◄', 'key-nav'));
+                bottomRow.appendChild(createKey('ArrowDown', '▼', 'key-nav'));
+                bottomRow.appendChild(createKey('ArrowRight', '►', 'key-nav'));
+                navSection.appendChild(bottomRow);
+            } else {
+                const rowEl = document.createElement('div');
+                rowEl.className = 'nav-row';
+                item.forEach(k => rowEl.appendChild(createKey(k[0], k[1], k[2])));
+                navSection.appendChild(rowEl);
+            }
+        });
+
+        // Numpad section
+        const numpadSection = document.getElementById('numpad-section');
+        // Rows with + spanning 2 rows (row index 1) and Enter spanning 2 rows (row index 3)
+        // We need special handling for + and Enter which span 2 rows
+        const numpadGrid = document.createElement('div');
+        numpadGrid.style.display = 'grid';
+        numpadGrid.style.gridTemplateColumns = 'repeat(4, 48px)';
+        numpadGrid.style.gridTemplateRows = 'repeat(5, 48px)';
+        numpadGrid.style.gap = '5px';
+
+        // Row 0: NumLock / * -
+        numpadGrid.appendChild(createKey('NumLock', 'Num', 'key-numpad'));
+        numpadGrid.appendChild(createKey('NumpadDivide', '/', 'key-numpad'));
+        numpadGrid.appendChild(createKey('NumpadMultiply', '*', 'key-numpad'));
+        numpadGrid.appendChild(createKey('NumpadSubtract', '-', 'key-numpad'));
+
+        // Row 1: 7 8 9 +
+        numpadGrid.appendChild(createKey('Numpad7', '7', 'key-numpad'));
+        numpadGrid.appendChild(createKey('Numpad8', '8', 'key-numpad'));
+        numpadGrid.appendChild(createKey('Numpad9', '9', 'key-numpad'));
+        const plusKey = createKey('NumpadAdd', '+', 'key-numpad');
+        plusKey.style.gridRow = 'span 2';
+        plusKey.style.height = '100%';
+        numpadGrid.appendChild(plusKey);
+
+        // Row 2: 4 5 6
+        numpadGrid.appendChild(createKey('Numpad4', '4', 'key-numpad'));
+        numpadGrid.appendChild(createKey('Numpad5', '5', 'key-numpad'));
+        numpadGrid.appendChild(createKey('Numpad6', '6', 'key-numpad'));
+
+        // Row 3: 1 2 3 Enter
+        numpadGrid.appendChild(createKey('Numpad1', '1', 'key-numpad'));
+        numpadGrid.appendChild(createKey('Numpad2', '2', 'key-numpad'));
+        numpadGrid.appendChild(createKey('Numpad3', '3', 'key-numpad'));
+        const enterKey = createKey('NumpadEnter', 'Ent', 'key-numpad');
+        enterKey.style.gridRow = 'span 2';
+        enterKey.style.height = '100%';
+        numpadGrid.appendChild(enterKey);
+
+        // Row 4: 0 (wide) .
+        const zeroKey = createKey('Numpad0', '0', 'key-numpad');
+        zeroKey.style.gridColumn = 'span 2';
+        numpadGrid.appendChild(zeroKey);
+        numpadGrid.appendChild(createKey('NumpadDecimal', '.', 'key-numpad'));
+
+        numpadSection.appendChild(numpadGrid);
+
+        // State
+        let lastTimestamp = null;
+        let totalPresses = 0;
+        let uniqueKeys = new Set();
+        let fastestDelta = Infinity;
+        const historyList = document.getElementById('history-list');
+        let historyEmpty = true;
+
+        function formatDelta(ms) {
+            if (ms >= 1000) return (ms / 1000).toFixed(2) + ' s';
+            return ms.toFixed(3) + ' ms';
+        }
+
+        function addHistoryEntry(event, delta, isDoublePress, keyDelta) {
+            if (historyEmpty) {
+                historyList.innerHTML = '';
+                historyEmpty = false;
+            }
+
+            const entry = document.createElement('div');
+            entry.className = 'history-entry' + (isDoublePress ? ' fast' : '');
+
+            const keyName = document.createElement('span');
+            keyName.className = 'history-key-name';
+            keyName.textContent = event.key === ' ' ? 'Space' : event.key;
+
+            const code = document.createElement('span');
+            code.className = 'history-code';
+            code.textContent = event.code;
+
+            const deltaEl = document.createElement('span');
+            deltaEl.className = 'history-delta';
+            deltaEl.textContent = delta !== null ? '+' + formatDelta(delta) : '—';
+
+            const keyDeltaEl = document.createElement('span');
+            keyDeltaEl.className = 'history-delta';
+            keyDeltaEl.style.color = isDoublePress ? '#ff4444' : '#555';
+            keyDeltaEl.textContent = keyDelta !== null ? '(key: ' + formatDelta(keyDelta) + ')' : '';
+
+            entry.appendChild(keyName);
+            entry.appendChild(code);
+            entry.appendChild(deltaEl);
+            entry.appendChild(keyDeltaEl);
+
+            historyList.insertBefore(entry, historyList.firstChild);
+
+            while (historyList.children.length > 500) {
+                historyList.removeChild(historyList.lastChild);
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('stat-total').textContent = totalPresses;
+            document.getElementById('stat-unique').textContent = uniqueKeys.size;
+            document.getElementById('stat-fastest').textContent =
+                fastestDelta === Infinity ? '—' : formatDelta(fastestDelta);
+        }
+
+
+        const DEBOUNCE_THRESHOLD = 150; // ms - double press detection per key
+        let lastPerfTime = null;
+        const perKeyLastTime = {}; // last press time per key code
+
+        document.addEventListener('keydown', (e) => {
+            const now = performance.now();
+            const delta = lastPerfTime !== null ? now - lastPerfTime : null;
+            const keyDelta = perKeyLastTime[e.code] !== undefined ? now - perKeyLastTime[e.code] : null;
+            const isDoublePress = keyDelta !== null && keyDelta < DEBOUNCE_THRESHOLD;
+            lastPerfTime = now;
+            perKeyLastTime[e.code] = now;
+
+            // Visual feedback
+            const keyEl = keyElements[e.code];
+            if (keyEl) {
+                keyEl.classList.add('pressed');
+                keyEl.classList.add('was-pressed');
+            }
+
+            // Stats
+            totalPresses++;
+            uniqueKeys.add(e.code);
+            if (delta !== null && delta < fastestDelta) {
+                fastestDelta = delta;
+            }
+            updateStats();
+
+            // History
+            addHistoryEntry(e, delta, isDoublePress, keyDelta);
+        });
+
+        document.addEventListener('keyup', (e) => {
+            const keyEl = keyElements[e.code];
+            if (keyEl) {
+                keyEl.classList.remove('pressed');
+            }
+        });
+
+        // Clear button
+        document.getElementById('clear-btn').addEventListener('click', () => {
+            historyList.innerHTML = '<div class="no-history">Press a key to see the history...</div>';
+            historyEmpty = true;
+            totalPresses = 0;
+            uniqueKeys.clear();
+            fastestDelta = Infinity;
+            lastPerfTime = null;
+            Object.keys(perKeyLastTime).forEach(k => delete perKeyLastTime[k]);
+            updateStats();
+
+            // Remove was-pressed from all keys
+            Object.values(keyElements).forEach(el => {
+                el.classList.remove('was-pressed');
+                el.classList.remove('pressed');
+            });
+        });
+
+        // Prevent tab from leaving
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab' || e.key === 'F1' || e.key === 'F5' || e.key === 'F11' || e.key === 'F12') {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
