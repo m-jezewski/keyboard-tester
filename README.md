@@ -1,5 +1,6 @@
 ## Keyboard Tester
 vibe-coded browser-based keyboard testing tool with double key registration (chattering) detection.
+
 <img width="1324" height="890" alt="image" src="https://github.com/user-attachments/assets/620d765b-fb97-4c02-937f-8958ef4189db" />
 
 ### What it does
@@ -12,7 +13,7 @@ vibe-coded browser-based keyboard testing tool with double key registration (cha
 This tool helps you **identify which keys are affected** and **measure the timing gap** between ghost presses. Unlike simple debounce testers that only catch sub-millisecond doubles, this tool tracks per-key timing independently, so it catches ghost presses even when other keys are typed in between (e.g., typing "git" but getting "giti" because "i" registered twice with a 100ms gap).
 
 ### Usage
-Open `src/index.html` in any modern browser. No build step, no dependencies.
+Open `src/index.html` in any modern browser.
 
 ### Configuration
 
